@@ -1,0 +1,14 @@
+services:
+  video-downloader:
+    build: .
+    container_name: video-downloader
+    ports:
+      - "8899:8899"
+    volumes:
+      - ./cookies:/app/cookies
+      - ./data:/app/data
+      - ./downloads:/app/downloads
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8899
+    restart: unless-stopped

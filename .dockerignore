@@ -1,0 +1,17 @@
+reclipv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+README.md
+LICENSE
+docs/
+assets/
+data/*.json
+downloads/
+cookies/*.txt

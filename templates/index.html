@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Downloader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f0f0f;
+      --panel: #141414;
+      --surface: #1a1a1a;
+      --text: #f5f5f5;
+      --muted: #9a9a9a;
+      --accent: #7c3aed;
+      --accent-soft: rgba(124, 58, 237, 0.24);
+      --border: rgba(255, 255, 255, 0.08);
+      --shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top, rgba(124, 58, 237, 0.12), transparent 34%),
+        var(--bg);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .app-shell {
+      width: min(100%, 520px);
+      padding: 32px 28px;
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)), var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      margin-bottom: 26px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.2rem, 7vw, 2.8rem);
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+    }
+
+    .tagline {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+    }
+
+    .url-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    input, select {
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      outline: none;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    select {
+      cursor: pointer;
+      min-width: 140px;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+
+    #downloadBtn {
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 22px;
+      font: inherit;
+      font-weight: 700;
+      color: white;
+      background: var(--accent);
+      cursor: pointer;
+      transition: transform 150ms ease, background 150ms ease, opacity 150ms ease;
+    }
+
+    #downloadBtn:hover:not(:disabled) {
+      transform: scale(1.02);
+    }
+
+    #downloadBtn:disabled {
+      opacity: 0.72;
+      cursor: wait;
+    }
+
+    .progress-container {
+      margin-top: 24px;
+      display: none;
+    }
+
+    .progress-bar-bg {
+      height: 8px;
+      background: var(--surface);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 300ms ease;
+    }
+
+    .progress-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    #statusLine {
+      min-height: 1.5em;
+      margin: 16px 2px 0;
+      color: var(--muted);
+      transition: color 150ms ease, opacity 150ms ease;
+      font-size: 0.9rem;
+    }
+
+    #statusLine[data-state="ready"] {
+      color: #c4b5fd;
+    }
+
+    #statusLine[data-state="error"] {
+      color: #fda4af;
+    }
+
+    #downloadLink {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 18px;
+      justify-content: center;
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--accent);
+      color: #ddd6fe;
+      text-decoration: none;
+      font-weight: 700;
+      transition: background 150ms ease;
+    }
+
+    #downloadLink:hover {
+      background: rgba(124, 58, 237, 0.08);
+    }
+
+    #downloadLink[hidden] {
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      .url-row {
+        flex-direction: column;
+      }
+      #downloadBtn {
+        width: 100%;
+      }
+    }
+    
+    .loader {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <div class="brand">
+      <h1>Video Downloader</h1>
+      <p class="tagline">Download your favorite videos and audio easily.</p>
+    </div>
+    <form id="downloadForm">
+      <div class="input-group">
+        <div class="url-row">
+          <input id="urlInput" type="text" placeholder="Paste video URL here...">
+          <select id="formatSelect">
+            <option value="video-best">MP4 (Best)</option>
+            <option value="video-1080">MP4 (1080p)</option>
+            <option value="video-720">MP4 (720p)</option>
+            <option value="audio-mp3">MP3 Audio</option>
+          </select>
+        </div>
+        <button id="downloadBtn" type="submit">Download</button>
+      </div>
+    </form>
+
+    <div id="progressContainer" class="progress-container">
+      <div class="progress-bar-bg">
+        <div id="progressBarFill" class="progress-bar-fill"></div>
+      </div>
+      <div class="progress-stats">
+        <span id="progressPercent">0%</span>
+        <span id="progressDetails"></span>
+      </div>
+    </div>
+
+    <p id="statusLine" data-state="idle">⏳ Ready for your link.</p>
+    <a id="downloadLink" href="" hidden>Download File</a>
+  </main>
+
+  <script>
+    const form = document.getElementById("downloadForm");
+    const urlInput = document.getElementById("urlInput");
+    const formatSelect = document.getElementById("formatSelect");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const statusLine = document.getElementById("statusLine");
+    const downloadLink = document.getElementById("downloadLink");
+    const progressContainer = document.getElementById("progressContainer");
+    const progressBarFill = document.getElementById("progressBarFill");
+    const progressPercent = document.getElementById("progressPercent");
+    const progressDetails = document.getElementById("progressDetails");
+
+    let activePoller = null;
+
+    function setStatus(state, message, showLoader = false) {
+      statusLine.dataset.state = state;
+      statusLine.innerHTML = (showLoader ? '<span class="loader"></span>' : '') + message;
+    }
+
+    function resetUI() {
+      downloadLink.hidden = true;
+      downloadLink.href = "";
+      progressContainer.style.display = "none";
+      progressBarFill.style.width = "0%";
+      progressPercent.textContent = "0%";
+      progressDetails.textContent = "";
+    }
+
+    async function pollJob(jobId) {
+      if (activePoller) window.clearInterval(activePoller);
+
+      activePoller = window.setInterval(async () => {
+        try {
+          const response = await fetch(`/api/status/${jobId}`);
+          const data = await response.json();
+
+          if (!response.ok) {
+            setStatus("error", `❌ ${data.error?.message || "Job not found."}`);
+            downloadBtn.disabled = false;
+            window.clearInterval(activePoller);
+            return;
+          }
+
+          if (data.status === "done") {
+            setStatus("ready", "✅ Download Complete!");
+            downloadLink.href = `/api/file/${jobId}`;
+            downloadLink.textContent = `Download ${data.filename || 'File'}`;
+            downloadLink.hidden = false;
+            downloadBtn.disabled = false;
+            progressBarFill.style.width = "100%";
+            progressPercent.textContent = "100%";
+            window.clearInterval(activePoller);
+            return;
+          }
+
+          if (data.status === "error") {
+            setStatus("error", `❌ ${data.error?.message || "Download failed."}`);
+            downloadBtn.disabled = false;
+            progressContainer.style.display = "none";
+            window.clearInterval(activePoller);
+            return;
+          }
+
+          if (data.status === "downloading") {
+            progressContainer.style.display = "block";
+            progressBarFill.style.width = `${data.percent}%`;
+            progressPercent.textContent = `${Math.round(data.percent)}%`;
+            progressDetails.textContent = `${data.speed} ${data.eta ? '• ' + data.eta : ''}`;
+            setStatus("downloading", "Downloading...", true);
+          } else if (data.status === "merging") {
+            setStatus("merging", "Processing / Converting...", true);
+            progressBarFill.style.width = "100%";
+          } else {
+            setStatus(data.status, "Initializing...", true);
+          }
+
+        } catch (e) {
+          console.error("Polling error:", e);
+        }
+      }, 1000);
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const url = urlInput.value.trim();
+      const preset_id = formatSelect.value;
+
+      if (!url) {
+        setStatus("error", "❌ Please paste a video URL.");
+        return;
+      }
+
+      resetUI();
+      downloadBtn.disabled = true;
+      setStatus("fetching", "Fetching video info...", true);
+
+      try {
+        const response = await fetch("/api/download", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, preset_id }),
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          setStatus("error", `❌ ${data.error?.message || "Download failed."}`);
+          downloadBtn.disabled = false;
+          return;
+        }
+
+        pollJob(data.job_id);
+      } catch (e) {
+        setStatus("error", "❌ Connection error. Try again.");
+        downloadBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
